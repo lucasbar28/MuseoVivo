@@ -1,47 +1,69 @@
 import numpy as np
+import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from modules.db import BaseDatos 
 
 class MotorBusqueda:
     def __init__(self):
-        # Usamos TF-IDF para pesar los términos [cite: 48]
         self.vectorizador = TfidfVectorizer()
-        self.corpus_procesado = []
-        self.metadata = [] # Para guardar títulos y fuentes
+        self.metadata = [] 
         self.tfidf_matrix = None
+        self.entrenar_con_db(BaseDatos())
+
+    def limpiar_texto_historico(self, texto):
+        """Elimina metadatos de carga y ruido de la web."""
+        # Elimina fechas de sistema (ej: octubre 6, 2025)
+        texto = re.sub(r'[a-zA-Záéíóú]+ \d{1,2}, \d{4}', '', texto)
+        # Elimina pies de página comunes en los documentos cargados
+        ruido = [
+            "Deja una respuesta", "Cancelar la respuesta", 
+            "También podría gustarte", "Publicado en"
+        ]
+        for frase in ruido:
+            texto = texto.split(frase)[0]
+        return texto.strip()
 
     def entrenar_con_db(self, db_instancia):
-        """Carga el conocimiento desde SQLite y construye el índice invertido[cite: 47, 56]."""
-        db_instancia.cursor.execute("SELECT titulo, contenido, fuente FROM conocimiento")
-        filas = db_instancia.cursor.fetchall()
-        
-        textos = [f"{f[0]} {f[1]}" for f in filas] # Combinamos título y contenido
-        self.metadata = [{"titulo": f[0], "fuente": f[2], "contenido": f[1]} for f in filas]
-        
-        if textos:
-            self.tfidf_matrix = self.vectorizador.fit_transform(textos)
-            print(f"✅ Motor de búsqueda entrenado con {len(textos)} documentos.")
+        """Carga el conocimiento y construye el índice TF-IDF."""
+        try:
+            db_instancia.cursor.execute("SELECT titulo, contenido, fuente FROM conocimiento")
+            filas = db_instancia.cursor.fetchall()
+            
+            if not filas:
+                return
 
-    def buscar(self, consulta_tokens, top_n=3):
-        """Implementa búsqueda por similitud del coseno[cite: 49]."""
+            textos_entrenamiento = []
+            self.metadata = []
+            
+            for f in filas:
+                # Limpiamos el contenido antes de indexarlo para mejorar el match
+                contenido_limpio = self.limpiar_texto_historico(f[1])
+                textos_entrenamiento.append(f"{f[0]} {contenido_limpio}")
+                
+                self.metadata.append({
+                    "titulo": f[0], 
+                    "fuente": f[2], 
+                    "contenido": contenido_limpio
+                })
+            
+            self.tfidf_matrix = self.vectorizador.fit_transform(textos_entrenamiento)
+            print(f"✅ Motor entrenado: {len(self.metadata)} docs limpios.")
+        except Exception as e:
+            print(f"❌ Error entrenamiento: {e}")
+
+    def buscar_mas_relevante(self, consulta_texto):
+        """Implementa búsqueda por similitud del coseno."""
         if self.tfidf_matrix is None:
-            return []
+            return {"contenido": "Error: Motor no entrenado"}, 0.0
 
-        # Convertimos la consulta del usuario a vector TF-IDF
-        query_str = " ".join(consulta_tokens)
-        query_vector = self.vectorizador.transform([query_str])
-        
-        # Calculamos similitudes
+        query_vector = self.vectorizador.transform([consulta_texto.lower()])
         similitudes = cosine_similarity(query_vector, self.tfidf_matrix).flatten()
         
-        # Obtenemos los índices de los mejores resultados
-        indices_top = similitudes.argsort()[-top_n:][::-1]
+        idx_mejor = similitudes.argmax()
+        score = round(float(similitudes[idx_mejor]), 4)
         
-        resultados = []
-        for idx in indices_top:
-            if similitudes[idx] > 0.1: # Umbral mínimo de relevancia
-                res = self.metadata[idx].copy()
-                res["score"] = round(float(similitudes[idx]), 4)
-                resultados.append(res)
+        if score > 0.15: # Umbral ajustado para mayor precisión
+            return self.metadata[idx_mejor], score
         
-        return resultados
+        return {"contenido": "No encontré información relevante en el archivo."}, 0.0 
