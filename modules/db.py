@@ -31,7 +31,6 @@ class BaseDatos:
         ''')
         
         # 2. Tabla de Historial: Registra cada interacción con el turista
-        # Se añade columna 'feedback' (0: sin voto, 1: útil, -1: no útil)
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS historial (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,15 +57,20 @@ class BaseDatos:
         ''')
         self.conn.commit()
 
-    def guardar_interaccion(self, pregunta, score, pp, tiempo):
-        """
-        MÉTODO REQUERIDO POR app.py:
-        Registra la métrica de cada consulta en la tabla historial.
-        """
+    def contar_documentos(self):
+        """Consulta la cantidad real de documentos en el corpus."""
         try:
-            # Convertimos el tiempo a milisegundos
+            self.cursor.execute("SELECT COUNT(*) FROM conocimiento")
+            resultado = self.cursor.fetchone()
+            return resultado[0] if resultado else 0
+        except Exception as e:
+            print(f"❌ Error al contar documentos: {e}")
+            return 0
+
+    def guardar_interaccion(self, pregunta, score, pp, tiempo):
+        """Registra la métrica de cada consulta en la tabla historial."""
+        try:
             tiempo_ms = int(tiempo * 1000)
-            
             query = """
                 INSERT INTO historial (texto_transcripto, score_similitud, perplejidad, tiempo_ms)
                 VALUES (?, ?, ?, ?)
@@ -78,9 +82,7 @@ class BaseDatos:
             print(f"❌ Error al guardar en historial: {e}")
 
     def registrar_feedback(self, pregunta, valor):
-        """
-        Actualiza el voto (👍/👎) en el último registro que coincida con la pregunta.
-        """
+        """Actualiza el voto (👍/👎) en el último registro que coincida con la pregunta."""
         try:
             query = """
                 UPDATE historial 
@@ -89,7 +91,7 @@ class BaseDatos:
             """
             self.cursor.execute(query, (valor, pregunta))
             self.conn.commit()
-            print(f"🗳️ Feedback registrado ({valor}) para: {pregunta[:30]}...")
+            print(f"🗳️ Feedback registrado ({valor})")
         except Exception as e:
             print(f"❌ Error al registrar feedback: {e}")
 
