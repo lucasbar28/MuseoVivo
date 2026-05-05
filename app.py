@@ -20,7 +20,10 @@ asr, nlp, ngrams, search, tts, db = inicializar_modulos()
 # --- BARRA LATERAL: Estado y Métricas ---
 with st.sidebar:
     st.title("📊 Estado del Sistema")
-    st.success("Base de Datos: 33 archivos indexados")
+    
+    # CAMBIO AQUÍ: Llamamos al nuevo método dinámico
+    total_docs = db.contar_documentos()
+    st.success(f"Base de Datos: {total_docs} archivos indexados")
     
     col1, col2 = st.columns(2)
     col1.metric("Objetivo PP", "6.69")
@@ -95,12 +98,10 @@ if audio_value:
             tiempo_resp = time.time() - start_time
             
             # Calculamos el WER comparando la transcripción con el título del resultado 
-            # como referencia de éxito semántico.
             wer_actual = asr.calcular_wer(resultado.get('titulo', ''), texto_usuario)
             
             # Guardamos todo en la DB
             db.guardar_interaccion(texto_usuario, score, pp, tiempo_resp)
-            # Nota: Asegúrate de que db.guardar_interaccion acepte el valor de WER si quieres trackearlo
             
             status.update(label="Respuesta generada", state="complete")
         else:
