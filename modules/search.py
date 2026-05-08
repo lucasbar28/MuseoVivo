@@ -6,22 +6,33 @@ from modules.db import BaseDatos
 
 class MotorBusqueda:
     def __init__(self):
-        self.vectorizador = TfidfVectorizer()
+        # Implementamos N-gramas (1, 2) para entender conceptos compuestos
+        self.vectorizador = TfidfVectorizer(
+            ngram_range=(1, 2), 
+            strip_accents='unicode',
+            lowercase=True
+        )
         self.metadata = [] 
         self.tfidf_matrix = None
         self.entrenar_con_db(BaseDatos())
 
     def limpiar_texto_historico(self, texto):
-        """Elimina metadatos de carga y ruido de la web."""
-        # Elimina fechas de sistema (ej: octubre 6, 2025)
+        """Elimina metadatos de carga y mejora el formato visual."""
+        # 1. Elimina fechas de sistema
         texto = re.sub(r'[a-zA-Záéíóú]+ \d{1,2}, \d{4}', '', texto)
-        # Elimina pies de página comunes en los documentos cargados
-        ruido = [
-            "Deja una respuesta", "Cancelar la respuesta", 
-            "También podría gustarte", "Publicado en"
-        ]
+        
+        # 2. Corta ruido web
+        ruido = ["Deja una respuesta", "Cancelar la respuesta", "También podría gustarte", "Publicado en"]
         for frase in ruido:
             texto = texto.split(frase)[0]
+        
+        # 3. INTERACTIVIDAD: Reparar puntos pegados para crear párrafos
+        # Esto cambia "vivienda.En 1829" por "vivienda. En 1829"
+        texto = re.sub(r'\.([a-zA-Záéíóú])', r'. \1', texto)
+        
+        # 4. Agrega saltos de línea después de cada punto para que Streamlit lo vea menos "pesado"
+        texto = texto.replace(". ", ".\n\n")
+        
         return texto.strip()
 
     def entrenar_con_db(self, db_instancia):
@@ -30,30 +41,29 @@ class MotorBusqueda:
             db_instancia.cursor.execute("SELECT titulo, contenido, fuente FROM conocimiento")
             filas = db_instancia.cursor.fetchall()
             
-            if not filas:
-                return
+            if not filas: return
 
             textos_entrenamiento = []
             self.metadata = []
             
             for f in filas:
-                # Limpiamos el contenido antes de indexarlo para mejorar el match
                 contenido_limpio = self.limpiar_texto_historico(f[1])
-                textos_entrenamiento.append(f"{f[0]} {contenido_limpio}")
+                # Indexamos título + contenido para darle más peso al nombre del lugar
+                textos_entrenamiento.append(f"{f[0]} {f[0]} {contenido_limpio}")
                 
                 self.metadata.append({
-                    "titulo": f[0], 
+                    "titulo": f[0].replace("_", " ").upper(), # Limpiamos el título doc_13...
                     "fuente": f[2], 
                     "contenido": contenido_limpio
                 })
             
             self.tfidf_matrix = self.vectorizador.fit_transform(textos_entrenamiento)
-            print(f"✅ Motor entrenado: {len(self.metadata)} docs limpios.")
+            print(f"✅ Motor N-Grams listo: {len(self.metadata)} docs.")
         except Exception as e:
             print(f"❌ Error entrenamiento: {e}")
 
     def buscar_mas_relevante(self, consulta_texto):
-        """Implementa búsqueda por similitud del coseno."""
+        """Búsqueda avanzada por similitud del coseno."""
         if self.tfidf_matrix is None:
             return {"contenido": "Error: Motor no entrenado"}, 0.0
 
@@ -63,7 +73,8 @@ class MotorBusqueda:
         idx_mejor = similitudes.argmax()
         score = round(float(similitudes[idx_mejor]), 4)
         
-        if score > 0.15: # Umbral ajustado para mayor precisión
+        # Con N-Grams, el score suele ser más preciso pero más bajo
+        if score > 0.12: 
             return self.metadata[idx_mejor], score
         
-        return {"contenido": "No encontré información relevante en el archivo."}, 0.0 
+        return {"contenido": "No encontré información específica en el archivo histórico."}, 0.0 
