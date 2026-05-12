@@ -3,7 +3,6 @@ import os
 
 class BaseDatos:
     def __init__(self, db_path="data/database.sqlite"):
-        # Aseguramos que la carpeta data exista para evitar errores de conexión
         if not os.path.exists("data"):
             os.makedirs("data")
             
@@ -12,14 +11,11 @@ class BaseDatos:
         self.crear_tablas()
 
     def conectar(self):
-        """Establece la conexión con el archivo SQLite."""
-        # check_same_thread=False es vital para que Streamlit no bloquee la DB
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.cursor = self.conn.cursor()
 
     def crear_tablas(self):
-        """Crea las 3 tablas obligatorias según los requisitos del proyecto."""
-        # 1. Tabla de Conocimiento: Almacena los textos del corpus
+        # 1. Tabla de Conocimiento
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS conocimiento (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,7 +26,7 @@ class BaseDatos:
             )
         ''')
         
-        # 2. Tabla de Historial: Registra cada interacción con el turista
+        # 2. Tabla de Historial (Métricas individuales)
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS historial (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +41,7 @@ class BaseDatos:
             )
         ''')
         
-        # 3. Tabla de Métricas: Datos agregados para el Dashboard
+        # 3. Tabla de Métricas (Datos agregados)
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS metricas (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +54,6 @@ class BaseDatos:
         self.conn.commit()
 
     def contar_documentos(self):
-        """Consulta la cantidad real de documentos en el corpus."""
         try:
             self.cursor.execute("SELECT COUNT(*) FROM conocimiento")
             resultado = self.cursor.fetchone()
@@ -67,22 +62,22 @@ class BaseDatos:
             print(f"❌ Error al contar documentos: {e}")
             return 0
 
-    def guardar_interaccion(self, pregunta, score, pp, tiempo):
-        """Registra la métrica de cada consulta en la tabla historial."""
+    # --- CAMBIO IMPORTANTE: Ahora acepta wer_val ---
+    def guardar_interaccion(self, pregunta, score, pp, tiempo, wer_val=0.0):
+        """Registra todas las métricas, incluyendo el WER."""
         try:
             tiempo_ms = int(tiempo * 1000)
             query = """
-                INSERT INTO historial (texto_transcripto, score_similitud, perplejidad, tiempo_ms)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO historial (texto_transcripto, score_similitud, perplejidad, tiempo_ms, wer)
+                VALUES (?, ?, ?, ?, ?)
             """
-            self.cursor.execute(query, (pregunta, score, pp, tiempo_ms))
+            self.cursor.execute(query, (pregunta, score, pp, tiempo_ms, wer_val))
             self.conn.commit()
-            print(f"✅ Interacción registrada en Historial (PP: {pp})")
+            print(f"✅ Interacción registrada (PP: {pp:.2f}, WER: {wer_val:.2f})")
         except Exception as e:
             print(f"❌ Error al guardar en historial: {e}")
 
     def registrar_feedback(self, pregunta, valor):
-        """Actualiza el voto (👍/👎) en el último registro que coincida con la pregunta."""
         try:
             query = """
                 UPDATE historial 
@@ -96,7 +91,6 @@ class BaseDatos:
             print(f"❌ Error al registrar feedback: {e}")
 
     def insertar_documento(self, titulo, contenido, fuente):
-        """Inserta un nuevo fragmento de historia en la base de datos."""
         self.cursor.execute(
             "INSERT INTO conocimiento (titulo, contenido, fuente) VALUES (?, ?, ?)",
             (titulo, contenido, fuente)
@@ -104,5 +98,4 @@ class BaseDatos:
         self.conn.commit()
 
     def cerrar(self):
-        """Cierra la conexión de forma segura."""
         self.conn.close() 
