@@ -99,3 +99,42 @@ class BaseDatos:
 
     def cerrar(self):
         self.conn.close() 
+
+    def actualizar_metricas_test(self, precision=None, recall=None, f1=None, accuracy_ner=None):
+        """Guarda automáticamente los resultados de los tests de consola en la BD."""
+        try:
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS evaluaciones_tests (
+                    id INTEGER PRIMARY KEY, 
+                    precision REAL, 
+                    recall REAL, 
+                    f1 REAL, 
+                    accuracy_ner REAL
+                )
+            """)
+            self.cursor.execute("SELECT * FROM evaluaciones_tests WHERE id=1")
+            row = self.cursor.fetchone()
+            if not row:
+                self.cursor.execute("INSERT INTO evaluaciones_tests (id, precision, recall, f1, accuracy_ner) VALUES (1, 0.0, 0.0, 0.0, 0.0)")
+                row = (1, 0.0, 0.0, 0.0, 0.0)
+                
+            p = precision if precision is not None else row[1]
+            r = recall if recall is not None else row[2]
+            f = f1 if f1 is not None else row[3]
+            a = accuracy_ner if accuracy_ner is not None else row[4]
+            
+            self.cursor.execute("UPDATE evaluaciones_tests SET precision=?, recall=?, f1=?, accuracy_ner=? WHERE id=1", (p, r, f, a))
+            self.conn.commit()
+        except Exception as e:
+            print(f"❌ Error al actualizar métricas de test: {e}")
+
+    def obtener_metricas_test(self):
+        """Devuelve los últimos resultados al Dashboard."""
+        try:
+            self.cursor.execute("SELECT precision, recall, f1, accuracy_ner FROM evaluaciones_tests WHERE id=1")
+            row = self.cursor.fetchone()
+            if row:
+                return {"precision": row[0], "recall": row[1], "f1": row[2], "accuracy_ner": row[3]}
+        except:
+            pass
+        return {"precision": 0.0, "recall": 0.0, "f1": 0.0, "accuracy_ner": 0.0}
