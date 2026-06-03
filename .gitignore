@@ -4,3 +4,7 @@ __pycache__/
 env/
 *.db
 *.sqlite
+temp_query.wav
+data/temp_res.mp3
+*.mp3
+*.wav

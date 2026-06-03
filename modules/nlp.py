@@ -11,9 +11,8 @@ class NLPProcessor:
             os.system("python -m spacy download es_core_news_sm")
             self.nlp = spacy.load("es_core_news_sm")
         
-        # 2. Refuerzo Semántico para Chascomús (Diccionario Categorizado)
-        # Reemplazamos el viejo PhraseMatcher por listas separadas por categoría
-        # para extraer exactamente la información que pide la rúbrica
+        # 2. Refuerzo Semántico para Chascomús (Diccionario Categorizado Híbrido)
+        # Fusionamos tus entidades originales con los nombres específicos de los nuevos locales
         self.diccionario_local = {
             "MONUMENTO_LUGAR": [
                 "casa de casco", "capilla de los negros", "fuerte san juan", 
@@ -25,18 +24,34 @@ class NLPProcessor:
                 "alfonsín", "vicente casco", "blandengues", "afrodescendiente"
             ],
             "GASTRONOMIA": [
-                "pejerrey", "pescado", "empanadas"
+                "pejerrey", "pescado", "empanadas", "café mule", "café mulé", 
+                "haroldo", "cervecería haroldo", "teófilo", "bach", "franklin"
             ],
             "OBJETO_DETALLE": [
                 "adobe", "platería criolla", "sótanos", "botes", "monumento", "democracia"
             ]
         }
 
-        # 3. Diccionario de Intenciones
+        # 3. Diccionario de Intenciones Originales (Para análisis tradicional del corpus)
         self.intenciones = {
             "historia": ["cuéntame", "historia", "pasó", "quién", "fundó", "origen", "contame"],
             "ubicación": ["dónde", "queda", "llegar", "ubicación", "dirección", "donde"],
             "información": ["qué es", "precio", "entrada", "horario", "abierto", "que es", "cuánto"]
+        }
+
+        # 4. NUEVO: Diccionario de Intenciones Genéricas Mapeadas a Filtros Geo (Ruteo Cognitivo)
+        # Agrupa los verbos de acción y conceptos genéricos para activar el radar de Haversine
+        self.intenciones_geo = {
+            "Gastronomia": [
+                "comer", "almorzar", "cenar", "tomar", "desayunar", "merendar",
+                "restaurant", "restaurante", "bar", "cafeteria", "café", 
+                "parrilla", "cerveceria", "bodegon", "hamburguesa"
+            ],
+            "Historico": [
+                "pasear", "caminar", "recorrer", "visitar", "conocer", "pescar", 
+                "jugar", "comprar", "artesanias", "regionales", "museo", "plaza", 
+                "parque", "laguna", "atractivos", "entretenimiento", "aire libre"
+            ]
         }
 
     def extraer_entidades(self, texto):
@@ -104,3 +119,47 @@ class NLPProcessor:
             "entidades": self.extraer_entidades(texto),
             "intencion": self.detectar_intencion(texto)
         }
+
+    def optimizar_consulta_tfidf(self, analisis_nlp):
+        """
+        Evita la 'Dilución de Vectores' limpiando stopwords y aplicando 
+        Query Boosting a las entidades detectadas.
+        """
+        # 1. Usar lemas sin stopwords ("decime donde queda el bar" -> "decir quedar bar")
+        tokens = analisis_nlp["tokens_limpios"]
+        query_base = " ".join(tokens)
+        
+        # 2. Query Boosting (NER): Si spaCy detectó una entidad (ej: "haroldo"), 
+        # le damos peso artificial x4 en la consulta para guiar al TF-IDF.
+        entidades = analisis_nlp["entidades"]
+        if entidades:
+            nombres = " ".join([e["texto"] for e in entidades])
+            query_base += f" {nombres} {nombres} {nombres} {nombres}"
+            
+        # Fallback de seguridad
+        return query_base if query_base.strip() else analisis_nlp["texto_original"]
+    
+    def generar_introduccion_espontanea(self, titulo_documento):
+        """
+        Genera una plantilla de respuesta aleatoria para romper la rigidez
+        del sistema de recuperación de información tradicional (RI).
+        """
+        import random
+        introducciones = [
+            f"¡Hola, Fran! Qué bueno que preguntes. Encontré esto en el registro sobre **{titulo_documento}**:",
+            f"Excelente elección. Te presento los detalles actualizados para **{titulo_documento}**:",
+            f"Perfecto, acá tenés la ficha histórica y comercial de **{titulo_documento}** que estabas buscando:",
+            f"Sincronizando con tu consulta... Esto es lo que registra el corpus de Chascomús sobre **{titulo_documento}**:"
+        ]
+        return random.choice(introducciones)
+
+    def evaluar_intencion_geo_generica(self, texto):
+        """
+        Determina si la consulta contiene términos genéricos de acción.
+        Devuelve la categoría correspondiente ('Gastronomia' o 'Historico') o None.
+        """
+        texto_norm = texto.lower()
+        for categoria, palabras in self.intenciones_geo.items():
+            if any(r"\b" + re.escape(p) + r"\b" in texto_norm or p in texto_norm for p in palabras):
+                return categoria
+        return None
