@@ -1,6 +1,11 @@
-streamlit
-spacy
-scikit-learn
-numpy
-SpeechRecognition
-gTTS
+streamlit>=1.32.0
+spacy>=3.7.0
+scikit-learn>=1.4.0
+numpy>=1.26.0
+SpeechRecognition>=3.10.0
+gTTS>=2.5.0
+folium>=0.16.0
+streamlit-folium>=0.20.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+plotly>=5.20.0

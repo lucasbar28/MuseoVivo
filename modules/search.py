@@ -42,7 +42,7 @@ class MotorBusqueda:
         return texto.strip()
 
     def entrenar_con_db(self, db_instancia):
-        """Carga el conocimiento y construye el índice TF-IDF."""
+        """Carga el conocimiento y construye el índice TF-IDF con Keyword Boosting."""
         try:
             db_instancia.cursor.execute("SELECT titulo, contenido, fuente FROM conocimiento")
             filas = db_instancia.cursor.fetchall()
@@ -56,9 +56,12 @@ class MotorBusqueda:
             
             for f in filas:
                 contenido_limpio = self.limpiar_texto_historico(f[1])
-                # Ponderación: Repetimos el título para que tenga más peso que el cuerpo
-                # Esto ayuda a que "Laguna" encuentre el doc "Laguna" con alta confianza
-                textos_entrenamiento.append(f"{f[0]} {f[0]} {contenido_limpio}")
+                
+                # --- KEYWORD BOOSTING OPTIMIZADO (X4) ---
+                # Multiplicamos la presencia del título para que los nombres propios 
+                # dominen la matriz de similitud frente a cuerpos de texto cortos.
+                titulo_boosted = f"{f[0]} " * 4
+                textos_entrenamiento.append(f"{titulo_boosted}{contenido_limpio}")
                 
                 self.metadata.append({
                     "titulo": f[0].replace("_", " ").upper(),
@@ -68,7 +71,7 @@ class MotorBusqueda:
             
             # Construcción de la matriz dispersa
             self.tfidf_matrix = self.vectorizador.fit_transform(textos_entrenamiento)
-            print(f"✅ Motor TF-IDF (N-Grams 1,2) listo: {len(self.metadata)} documentos.")
+            print(f"✅ Motor TF-IDF (N-Grams 1,2) listo con Boosting x4: {len(self.metadata)} documentos.")
             
         except Exception as e:
             print(f"❌ Error entrenamiento: {e}")
@@ -88,8 +91,6 @@ class MotorBusqueda:
         idx_mejor = similitudes.argmax()
         score = round(float(similitudes[idx_mejor]), 4)
         
-        # Umbral de confianza adaptado a N-Grams
-        if score > 0.12: 
-            return self.metadata[idx_mejor], score
-        
-        return {"contenido": "No encontré información específica en el archivo histórico de Chascomús."}, 0.0 
+        # ELIMINAMOS EL UMBRAL HARDCODEADO DE 0.12
+        # Devolvemos el score real para que la interfaz decida si entra en Nivel 1, 2 o 3.
+        return self.metadata[idx_mejor], score 

@@ -62,9 +62,8 @@ class BaseDatos:
             print(f"❌ Error al contar documentos: {e}")
             return 0
 
-    # --- CAMBIO IMPORTANTE: Ahora acepta wer_val ---
     def guardar_interaccion(self, pregunta, score, pp, tiempo, wer_val=0.0):
-        """Registra todas las métricas, incluyendo el WER."""
+        """Registra todas las métricas, incluyendo el WER y devuelve el ID único generado."""
         try:
             tiempo_ms = int(tiempo * 1000)
             query = """
@@ -74,10 +73,13 @@ class BaseDatos:
             self.cursor.execute(query, (pregunta, score, pp, tiempo_ms, wer_val))
             self.conn.commit()
             print(f"✅ Interacción registrada (PP: {pp:.2f}, WER: {wer_val:.2f})")
+            return self.cursor.lastrowid  # Retorna el ID autoincremental de la fila insertada
         except Exception as e:
             print(f"❌ Error al guardar en historial: {e}")
+            return None
 
     def registrar_feedback(self, pregunta, valor):
+        """Método heredado (Búsqueda por texto plano)."""
         try:
             query = """
                 UPDATE historial 
@@ -86,9 +88,19 @@ class BaseDatos:
             """
             self.cursor.execute(query, (valor, pregunta))
             self.conn.commit()
-            print(f"🗳️ Feedback registrado ({valor})")
+            print(f"🗳️ Feedback registrado ({valor}) por texto")
         except Exception as e:
-            print(f"❌ Error al registrar feedback: {e}")
+            print(f"❌ Error al registrar feedback por texto: {e}")
+
+    def registrar_feedback_por_id(self, interaccion_id, valor):
+        """Actualiza la métrica de feedback de forma segura y directa usando el ID numérico."""
+        try:
+            query = "UPDATE historial SET feedback = ? WHERE id = ?"
+            self.cursor.execute(query, (valor, interaccion_id))
+            self.conn.commit()
+            print(f"🗳️ Feedback registrado ({valor}) para registro ID {interaccion_id}")
+        except Exception as e:
+            print(f"❌ Error al registrar feedback por ID: {e}")
 
     def insertar_documento(self, titulo, contenido, fuente):
         self.cursor.execute(
@@ -137,4 +149,4 @@ class BaseDatos:
                 return {"precision": row[0], "recall": row[1], "f1": row[2], "accuracy_ner": row[3]}
         except:
             pass
-        return {"precision": 0.0, "recall": 0.0, "f1": 0.0, "accuracy_ner": 0.0}
+        return {"precision": 0.0, "recall": 0.0, "f1": 0.0, "accuracy_ner": 0.0} 
