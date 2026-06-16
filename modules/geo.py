@@ -4,8 +4,8 @@ from streamlit_folium import st_folium
 
 class GeoEngine:
     def __init__(self):
-        self.lat_centro = -35.5772
-        self.lng_centro = -57.9794
+        self.lat_centro = -35.577493129233176
+        self.lng_centro = -58.01362755722343
 
         self.coordenadas_sitios = {
 
@@ -14,109 +14,109 @@ class GeoEngine:
             # ================================================
 
             # --- Casa de Casco y subdocumentos (Sarmiento y San Martín) ---
-            "casa_de_casco.txt":               {"lat": -35.58020814920432, "lng": -58.01358892158921, "nombre": "Casa de Casco (Sarmiento y San Martín)", "tipo": "Historico"},
-            "doc_13_casa_casco_chascomus.txt": {"lat": -35.58020814920432, "lng": -58.01358892158921, "nombre": "Casa de Casco (Historia Completa)", "tipo": "Historico"},
-            "HIST_Casco_01_Origen.txt":        {"lat": -35.58020814920432, "lng": -58.01358892158921, "nombre": "Casa de Casco — Origen", "tipo": "Historico"},
-            "HIST_Casco_02_Arquitectura.txt":  {"lat": -35.58020814920432, "lng": -58.01358892158921, "nombre": "Casa de Casco — Arquitectura", "tipo": "Historico"},
-            "HIST_Casco_03_Museo_txt.txt":     {"lat": -35.58020814920432, "lng": -58.01358892158921, "nombre": "Casa de Casco — Museo Municipal", "tipo": "Historico"},
-            "HIST_Casco_04_Leyenda.txt":       {"lat": -35.58020814920432, "lng": -58.01358892158921, "nombre": "Casa de Casco — Leyenda del Fantasma", "tipo": "Historico"},
+            "casa_de_casco.txt":               {"lat": -35.57860727800254, "lng": -58.01429481316557, "nombre": "Casa de Casco (Sarmiento y San Martín)", "tipo": "Historico"},
+            "doc_13_casa_casco_chascomus.txt": {"lat": -35.57860727800254, "lng": -58.01429481316557, "nombre": "Casa de Casco (Historia Completa)", "tipo": "Historico"},
+            "HIST_Casco_01_Origen.txt":        {"lat": -35.57860727800254, "lng": -58.01429481316557, "nombre": "Casa de Casco — Origen", "tipo": "Historico"},
+            "HIST_Casco_02_Arquitectura.txt":  {"lat": -35.57860727800254, "lng": -58.01429481316557, "nombre": "Casa de Casco — Arquitectura", "tipo": "Historico"},
+            "HIST_Casco_03_Museo_txt.txt":     {"lat": -35.57860727800254, "lng": -58.01429481316557, "nombre": "Casa de Casco — Museo Municipal", "tipo": "Historico"},
+            "HIST_Casco_04_Leyenda.txt":       {"lat": -35.57860727800254, "lng": -58.01429481316557, "nombre": "Casa de Casco — Leyenda del Fantasma", "tipo": "Historico"},
 
             # --- Capilla de los Negros y subdocumentos ---
-            "capilla_de_los_negros.txt":              {"lat": -35.58419859103215, "lng": -58.00311048591032, "nombre": "Capilla de los Negros (1862)", "tipo": "Historico"},
-            "doc_10_capilla_negros_chascomus.txt":    {"lat": -35.58419859103215, "lng": -58.00311048591032, "nombre": "Capilla de los Negros — Historia", "tipo": "Historico"},
-            "HIST_Capilla_01_Comunidad.txt":          {"lat": -35.58419859103215, "lng": -58.00311048591032, "nombre": "Capilla de los Negros — Comunidad", "tipo": "Historico"},
-            "HIST_Capilla_02_Construccion.txt":       {"lat": -35.58419859103215, "lng": -58.00311048591032, "nombre": "Capilla de los Negros — Construcción", "tipo": "Historico"},
-            "HIST_Capilla_03_Culto.txt":              {"lat": -35.58419859103215, "lng": -58.00311048591032, "nombre": "Capilla de los Negros — Culto y Rituales", "tipo": "Historico"},
+            "capilla_de_los_negros.txt":              {"lat": -35.582189815814246, "lng": -58.006696005773975, "nombre": "Capilla de los Negros (1862)", "tipo": "Historico"},
+            "doc_10_capilla_negros_chascomus.txt":    {"lat": -35.582189815814246, "lng": -58.006696005773975, "nombre": "Capilla de los Negros — Historia", "tipo": "Historico"},
+            "HIST_Capilla_01_Comunidad.txt":          {"lat": -35.582189815814246, "lng": -58.006696005773975, "nombre": "Capilla de los Negros — Comunidad", "tipo": "Historico"},
+            "HIST_Capilla_02_Construccion.txt":       {"lat": -35.582189815814246, "lng": -58.006696005773975, "nombre": "Capilla de los Negros — Construcción", "tipo": "Historico"},
+            "HIST_Capilla_03_Culto.txt":              {"lat": -35.582189815814246, "lng": -58.006696005773975, "nombre": "Capilla de los Negros — Culto y Rituales", "tipo": "Historico"},
 
             # --- Museo Pampeano y Parque Libres del Sur ---
-            "museo_pampeano.txt":                        {"lat": -35.58229891458210, "lng": -58.01089032158921, "nombre": "Museo Pampeano", "tipo": "Historico"},
-            "HIST_Museo_Pampeano_01.txt":                {"lat": -35.58229891458210, "lng": -58.01089032158921, "nombre": "Museo Pampeano — Colecciones", "tipo": "Historico"},
-            "doc_11_que_hacer_chascomus_con_chicos.txt": {"lat": -35.58229891458210, "lng": -58.01089032158921, "nombre": "Museo Pampeano y Parque Libres del Sur", "tipo": "Historico"},
+            "museo_pampeano.txt":                        {"lat": -35.57794748656019, "lng": -58.017457136459484, "nombre": "Museo Pampeano", "tipo": "Historico"},
+            "HIST_Museo_Pampeano_01.txt":                {"lat": -35.57794748656019, "lng": -58.017457136459484, "nombre": "Museo Pampeano — Colecciones", "tipo": "Historico"},
+            "doc_11_que_hacer_chascomus_con_chicos.txt": {"lat": -35.57794748656019, "lng": -58.017457136459484, "nombre": "Museo Pampeano y Parque Libres del Sur", "tipo": "Historico"},
 
             # --- Palacio Municipal Salamone ---
-            "municipalidad_salamone.txt":             {"lat": -35.57941568210321, "lng": -58.01412048591032, "nombre": "Palacio Municipal (Salamone)", "tipo": "Historico"},
-            "URB_Municipalidad_01_Salamone.txt":      {"lat": -35.57941568210321, "lng": -58.01412048591032, "nombre": "Municipalidad — Obra de Salamone", "tipo": "Historico"},
-            "doc_7_arquitectura_chascomus.txt":       {"lat": -35.57941568210321, "lng": -58.01412048591032, "nombre": "Arquitectura de Chascomús", "tipo": "Historico"},
+            "municipalidad_salamone.txt":             {"lat": -35.57774888491685, "lng": -58.01376070577693, "nombre": "Palacio Municipal (Salamone)", "tipo": "Historico"},
+            "URB_Municipalidad_01_Salamone.txt":      {"lat": -35.57774888491685, "lng": -58.01376070577693, "nombre": "Municipalidad — Obra de Salamone", "tipo": "Historico"},
+            "doc_7_arquitectura_chascomus.txt":       {"lat": -35.57774888491685, "lng": -58.01376070577693, "nombre": "Arquitectura de Chascomús", "tipo": "Historico"},
 
             # --- Reloj de los Italianos ---
-            "reloj_de_los_italianos.txt":             {"lat": -35.57840124589103, "lng": -58.01590048591032, "nombre": "Reloj de los Italianos (Lastra y Mitre)", "tipo": "Historico"},
-            "doc_20_reloj_italianos_chascomus.txt":   {"lat": -35.57840124589103, "lng": -58.01590048591032, "nombre": "Reloj de los Italianos — Historia", "tipo": "Historico"},
-            "HIST_Reloj_Italianos_01.txt":            {"lat": -35.57840124589103, "lng": -58.01590048591032, "nombre": "Reloj de los Italianos — Comunidad Italiana", "tipo": "Historico"},
+            "reloj_de_los_italianos.txt":             {"lat": -35.57683366875893, "lng": -58.01334754441206, "nombre": "Reloj de los Italianos (Lastra y Mitre)", "tipo": "Historico"},
+            "doc_20_reloj_italianos_chascomus.txt":   {"lat": -35.57683366875893, "lng": -58.01334754441206, "nombre": "Reloj de los Italianos — Historia", "tipo": "Historico"},
+            "HIST_Reloj_Italianos_01.txt":            {"lat": -35.57683366875893, "lng": -58.01334754441206, "nombre": "Reloj de los Italianos — Comunidad Italiana", "tipo": "Historico"},
 
             # --- Catedral Nuestra Señora de la Merced (Lavalle 281) ---
-            "doc_18_catedral_chascomus.txt":          {"lat": -35.57871859103214, "lng": -58.01270048591032, "nombre": "Catedral Nuestra Señora de la Merced (Lavalle 281)", "tipo": "Historico"},
-            "URB_Catedral_01_General.txt":            {"lat": -35.57871859103214, "lng": -58.01270048591032, "nombre": "Catedral — Historia General", "tipo": "Historico"},
-            "URB_Catedral_02_Estilo.txt":             {"lat": -35.57871859103214, "lng": -58.01270048591032, "nombre": "Catedral — Estilo Arquitectónico", "tipo": "Historico"},
+            "doc_18_catedral_chascomus.txt":          {"lat": -35.57898919181944, "lng": -58.013810682482784, "nombre": "Catedral Nuestra Señora de la Merced (Lavalle 281)", "tipo": "Historico"},
+            "URB_Catedral_01_General.txt":            {"lat": -35.57898919181944, "lng": -58.013810682482784, "nombre": "Catedral — Historia General", "tipo": "Historico"},
+            "URB_Catedral_02_Estilo.txt":             {"lat": -35.57898919181944, "lng": -58.013810682482784, "nombre": "Catedral — Estilo Arquitectónico", "tipo": "Historico"},
 
            # --- Plaza Independencia / Centro Cívico ---
-            "doc_15_historia_chascomus.txt":          {"lat": -35.57884215682103, "lng": -58.01312048592014, "nombre": "Plaza Independencia — Historia de Chascomús", "tipo": "Historico"},
-            "URB_Plaza_01_Historia.txt":              {"lat": -35.57884215682103, "lng": -58.01312048592014, "nombre": "Plaza Independencia — Diseño Colonial", "tipo": "Historico"},
-            "doc_31_atractivos.txt":                  {"lat": -35.57884215682103, "lng": -58.01312048592014, "nombre": "Atractivos del Casco Histórico", "tipo": "Historico"},
+            "doc_15_historia_chascomus.txt":          {"lat": -35.57851170202658, "lng": -58.01386559782448, "nombre": "Plaza Independencia — Historia de Chascomús", "tipo": "Historico"},
+            "URB_Plaza_01_Historia.txt":              {"lat": -35.57851170202658, "lng": -58.01386559782448, "nombre": "Plaza Independencia — Diseño Colonial", "tipo": "Historico"},
+            "doc_31_atractivos.txt":                  {"lat": -35.57851170202658, "lng": -58.01386559782448, "nombre": "Atractivos del Casco Histórico", "tipo": "Historico"},
 
             # --- Teatro Brazzola (Sarmiento 90) ---
-            "doc_24_fiestas_tradicionales_chascomus.txt": {"lat": -35.57912048591032, "lng": -58.01384014582103, "nombre": "Teatro Brazzola — Fiestas y Cultura (Sarmiento 90)", "tipo": "Historico"},
+            "doc_24_fiestas_tradicionales_chascomus.txt": {"lat": -35.57847110174371, "lng": -58.01465171316587, "nombre": "Teatro Brazzola — Fiestas y Cultura (Sarmiento 90)", "tipo": "Historico"},
 
             # --- Club de Pelota Paleta (Sarmiento y San Martín, offset norte) ---
-            "doc_17_club_pelota_chascomus.txt":       {"lat": -35.58001045892014, "lng": -58.01348871320432, "nombre": "Club de Pelota Paleta (Sarmiento y San Martín)", "tipo": "Historico"},
+            "doc_17_club_pelota_chascomus.txt":       {"lat": -35.57910087654957, "lng": -58.014289387737264, "nombre": "Club de Pelota Paleta (Sarmiento y San Martín)", "tipo": "Historico"},
 
-            # --- Castillo de la Amistad (Soler y Libres del Sur) ---
-            "doc_6_castillo_amistad_chascomus.txt":   {"lat": -35.57618048591032, "lng": -58.01462014582103, "nombre": "Castillo de la Amistad (Soler y Libres del Sur)", "tipo": "Historico"},
+            # --- Castillo de la Amistad (Av. Pedro Urruty) ---
+            "doc_6_castillo_amistad_chascomus.txt":   {"lat": -35.55097676919556, "lng": -58.054543720776266, "nombre": "Castillo de la Amistad (Av. Pedro Urruty)", "tipo": "Historico"},
 
             # --- Casa de Alfonsín (Lavalle 227) ---
-            "doc_9_alfonsin_chascomus.txt":           {"lat": -35.57861048591032, "lng": -58.01254014582103, "nombre": "Casa de Alfonsín (Lavalle 227)", "tipo": "Historico"},
+            "doc_9_alfonsin_chascomus.txt":           {"lat": -35.578362252754616, "lng": -58.01353794284365, "nombre": "Casa de Alfonsín (Lavalle 227)", "tipo": "Historico"},
 
             # --- Vieja Estación / Museo Ferroviario (Belgrano 300) ---
-            "doc_28_vieja_estacion_chascomus.txt":    {"lat": -35.57445014582103, "lng": -58.00980048591032, "nombre": "Vieja Estación / Museo Ferroviario (Belgrano 300)", "tipo": "Historico"},
-            "HIST_Vieja_Estacion_01.txt":             {"lat": -35.57445014582103, "lng": -58.00980048591032, "nombre": "Vieja Estación — Historia Ferroviaria", "tipo": "Historico"},
+            "doc_28_vieja_estacion_chascomus.txt":    {"lat": -35.570685569072054, "lng": -58.01599598248836, "nombre": "Vieja Estación / Museo Ferroviario (Belgrano 300)", "tipo": "Historico"},
+            "HIST_Vieja_Estacion_01.txt":             {"lat": -35.570685569072054, "lng": -58.01599598248836, "nombre": "Vieja Estación — Historia Ferroviaria", "tipo": "Historico"},
 
             # --- Estación Hidrobiológica (Av. Lastra y Juárez) ---
-            "doc_14_estacion_hidrobiologica_chascomus.txt": {"lat": -35.57744024589102, "lng": -58.01715032158921, "nombre": "Estación Hidrobiológica (Av. Lastra y Juárez)", "tipo": "Historico"},
-            "GEO_Laguna_02_Pejerrey.txt":             {"lat": -35.57744024589102, "lng": -58.01715032158921, "nombre": "Estación Hidrobiológica — Cría del Pejerrey", "tipo": "Historico"},
+            "doc_14_estacion_hidrobiologica_chascomus.txt": {"lat": -35.57682012723176, "lng": -58.01770719043619, "nombre": "Estación Hidrobiológica (Av. Lastra y Juárez)", "tipo": "Historico"},
+            "GEO_Laguna_02_Pejerrey.txt":             {"lat": -35.57682012723176, "lng": -58.01770719043619, "nombre": "Estación Hidrobiológica — Cría del Pejerrey", "tipo": "Historico"},
 
             # --- Torii de Chascomús (Costanera Sur) ---
-            "doc_16_torii_chascomus.txt":             {"lat": -35.59120014582103, "lng": -58.01980048591032, "nombre": "Torii de Chascomús (Costanera Sur)", "tipo": "Historico"},
+            "doc_16_torii_chascomus.txt":             {"lat": -35.592676703297194, "lng": -57.98089152110877, "nombre": "Torii de Chascomús (Costanera Sur)", "tipo": "Historico"},
 
             # --- Espigón Domingo Cazaux ---
-            "doc_29_espigon_chascomus_pesca_atardeceres.txt": {"lat": -35.57580014582103, "lng": -58.01960048591032, "nombre": "Espigón Domingo Cazaux (Pesca y Atardeceres)", "tipo": "Historico"},
+            "doc_29_espigon_chascomus_pesca_atardeceres.txt": {"lat": -35.58254612775905, "lng": -58.01908144293625, "nombre": "Espigón Domingo Cazaux (Pesca y Atardeceres)", "tipo": "Historico"},
 
             # --- Cementerio Protestante / Capilla San Andrés (5km por Av. Campaña del Desierto) ---
-            "doc_26_cementerio_protestante_chascomus.txt": {"lat": -35.61800014582103, "lng": -57.99500048591032, "nombre": "Cementerio Protestante / Capilla San Andrés", "tipo": "Historico"},
+            "doc_26_cementerio_protestante_chascomus.txt": {"lat": -35.57855330887996, "lng": -57.96273193607241, "nombre": "Cementerio Protestante / Capilla San Andrés", "tipo": "Historico"},
 
-           # --- Aeroclub (Paracaidismo y Vuelos) ---
-            "doc_5_aire_libre_diversion.txt":         {"lat": -35.55200145821032, "lng": -57.99800048591032, "nombre": "Aeroclub Chascomús (Paracaidismo y Vuelos)", "tipo": "Historico"},
+           # --- Aeroclub (Paracaidismo y Vuelos, Ruta 20) ---
+            "doc_5_aire_libre_diversion.txt":         {"lat": -35.536237227383204, "lng": -58.04691562339352, "nombre": "Aeroclub Chascomús (Paracaidismo y Vuelos)", "tipo": "Historico"},
 
             # --- Laguna (punto central geográfico) ---
-            "doc_27_laguna_chascomus.txt":            {"lat": -35.59800014582103, "lng": -57.99500048591032, "nombre": "Laguna de Chascomús (3.044 ha)", "tipo": "Historico"},
-            "GEO_Laguna_01_Datos.txt":                {"lat": -35.59800014582103, "lng": -57.99500048591032, "nombre": "Laguna — Datos Geográficos", "tipo": "Historico"},
-            "NAT_Laguna_Ecologia_2026.txt":           {"lat": -35.59800014582103, "lng": -57.99500048591032, "nombre": "Laguna — Ecología y Cianobacterias 2026", "tipo": "Historico"},
+            "doc_27_laguna_chascomus.txt":            {"lat": -35.58072045903063, "lng": -58.020780554775016, "nombre": "Laguna de Chascomús (3.044 ha)", "tipo": "Historico"},
+            "GEO_Laguna_01_Datos.txt":                {"lat": -35.58072045903063, "lng": -58.020780554775016, "nombre": "Laguna — Datos Geográficos", "tipo": "Historico"},
+            "NAT_Laguna_Ecologia_2026.txt":           {"lat": -35.58072045903063, "lng": -58.020780554775016, "nombre": "Laguna — Ecología y Cianobacterias 2026", "tipo": "Historico"},
 
             # --- Paseo de los Artesanos (Costanera) ---
-            "doc_3_regionales.txt":                   {"lat": -35.57500014582103, "lng": -58.02050048591032, "nombre": "Paseo de los Artesanos y Comercios Regionales", "tipo": "Historico"},
+            "doc_3_regionales.txt":                   {"lat": -35.58306702473038, "lng": -58.007590944065655, "nombre": "Paseo de los Artesanos y Comercios Regionales", "tipo": "Historico"},
 
             # --- Personajes contemporáneos → Centro Cultural Vieja Estación como referencia ---
-            "HIST_Personajes_Contemporaneos.txt":     {"lat": -35.57445014582103, "lng": -58.00980048591032, "nombre": "Personajes Contemporáneos de Chascomús", "tipo": "Historico"},
+            "HIST_Personajes_Contemporaneos.txt":     {"lat": -35.57100863528421, "lng": -58.015849575181676, "nombre": "Personajes Contemporáneos de Chascomús", "tipo": "Historico"},
 
             # ================================================
             # GASTRONOMÍA Y COMERCIAL
             # ================================================
-            "franklin_47.txt":             {"lat": -35.57364890000000, "lng": -58.01325610000000, "nombre": "Franklin 47 Bar Cultural", "tipo": "Gastronomia"},
-            "teofilo_bar.txt":             {"lat": -35.57948215682103, "lng": -58.01421048592014, "nombre": "Teófilo Bar (Libres del Sur 156)", "tipo": "Gastronomia"},
-            "bach_patio.txt":              {"lat": -35.57120513059688, "lng": -58.00507550320817, "nombre": "Bach Patio Cervecero (Belbeze 153)", "tipo": "Gastronomia"},
-            "olofsson_cerveceria.txt":     {"lat": -35.57912048591032, "lng": -58.01168014582103, "nombre": "Cervecería Olofsson (San Martín 140)", "tipo": "Gastronomia"},
-            "cerveceria_haroldo.txt":      {"lat": -35.58052024589102, "lng": -58.01714032158921, "nombre": "Haroldo (Bartolomé Mitre 353)", "tipo": "Gastronomia"},
-            "punta_norte.txt":             {"lat": -35.56800663937257, "lng": -58.02451582315401, "nombre": "Punta Norte (Costanera Alem y Escribano)", "tipo": "Gastronomia"},
-            "bicho_raro.txt":              {"lat": -35.57715014582103, "lng": -58.01314048591032, "nombre": "Bicho Raro (Libres del Sur 82)", "tipo": "Gastronomia"},
-            "bar_alsina.txt":              {"lat": -35.57682048591032, "lng": -58.01492014582103, "nombre": "Bar Alsina (Alsina 204)", "tipo": "Gastronomia"},
-            "chancho_aurelio.txt":         {"lat": -35.57140014582103, "lng": -58.01120048591032, "nombre": "Chancho Aurelio (Av. Perón 355)", "tipo": "Gastronomia"},
-            "cafe_club_social.txt":        {"lat": -35.57891048591032, "lng": -58.01284014582103, "nombre": "Café Club Social (Libres del Sur)", "tipo": "Gastronomia"},
-            "33_beer_burger.txt":          {"lat": -35.57210014582103, "lng": -58.01190048591032, "nombre": "33 Beer & Burger (Pte. Perón 255)", "tipo": "Gastronomia"},
-            "las_lomittas.txt":            {"lat": -35.61500014582103, "lng": -58.04200048591032, "nombre": "Las Lomittas (Barrio Lomas Altas)", "tipo": "Gastronomia"},
-            "vieja_esquina.txt":           {"lat": -35.57591048591032, "lng": -58.01894014582103, "nombre": "Restaurante Vieja Esquina (Artigas y Costanera)", "tipo": "Gastronomia"},
-            "macuco_bar.txt":              {"lat": -35.57751048591032, "lng": -58.01790014582103, "nombre": "Macuco Bar (Av. Costanera España 19)", "tipo": "Gastronomia"},
-            "areca_multiespacio.txt":      {"lat": -35.57452014582103, "lng": -58.01461048591032, "nombre": "Areca Multiespacio (Libres del Sur 14)", "tipo": "Gastronomia"},
-            "el_bodegon.txt":              {"lat": -35.57460014582103, "lng": -57.99520048591032, "nombre": "El Bodegón (Av. Lastra 446)", "tipo": "Gastronomia"},
-            "cafe_mule.txt":               {"lat": -35.57863045892014, "lng": -58.02044071320432, "nombre": "Café Mulé (Av. Costanera España 4)", "tipo": "Gastronomia"},
-            "la_toscana.txt":              {"lat": -35.57990014582103, "lng": -58.01350048591032, "nombre": "La Toscana (Lavalle 139)", "tipo": "Gastronomia"},
+            "franklin_47.txt":             {"lat": -35.57259723001434, "lng": -58.010604151804166, "nombre": "Franklin 47 Bar Cultural", "tipo": "Gastronomia"},
+            "teofilo_bar.txt":             {"lat": -35.57448504664866, "lng": -58.014053440596484, "nombre": "Teófilo Bar (Libres del Sur 156)", "tipo": "Gastronomia"},
+            "bach_patio.txt":              {"lat": -35.57092546306074, "lng": -58.00361643020003, "nombre": "Bach Patio Cervecero (Belbeze 153)", "tipo": "Gastronomia"},
+            "olofsson_cerveceria.txt":     {"lat": -35.57815388826812, "lng": -58.00988059156062, "nombre": "Cervecería Olofsson (San Martín 140)", "tipo": "Gastronomia"},
+            "cerveceria_haroldo.txt":      {"lat": -35.58198202201804, "lng": -58.01251350577424, "nombre": "Haroldo (Bartolomé Mitre 353)", "tipo": "Gastronomia"},
+            "punta_norte.txt":             {"lat": -35.56849649251462, "lng": -58.02370635293211, "nombre": "Punta Norte (Costanera Alem y Escribano)", "tipo": "Gastronomia"},
+            "bicho_raro.txt":              {"lat": -35.575332559968956, "lng": -58.013581659754486, "nombre": "Bicho Raro (Libres del Sur 82)", "tipo": "Gastronomia"},
+            "bar_alsina.txt":              {"lat": -35.579670013222014, "lng": -58.012038005775764, "nombre": "Bar Alsina (Alsina 204)", "tipo": "Gastronomia"},
+            "chancho_aurelio.txt":         {"lat": -35.5813854173409, "lng": -58.0079047750919, "nombre": "Chancho Aurelio (Av. Perón 355)", "tipo": "Gastronomia"},
+            "cafe_club_social.txt":        {"lat": -35.57713518646701, "lng": -58.013559889751214, "nombre": "Café Club Social (Libres del Sur)", "tipo": "Gastronomia"},
+            "33_beer_burger.txt":          {"lat": -35.58041436812814, "lng": -58.00830213731309, "nombre": "33 Beer & Burger (Pte. Perón 255)", "tipo": "Gastronomia"},
+            "las_lomittas.txt":            {"lat": -35.58501645473256, "lng": -58.06613690634044, "nombre": "Las Lomittas (Barrio Lomas Altas)", "tipo": "Gastronomia"},
+            "vieja_esquina.txt":           {"lat": -35.582661536450665, "lng": -58.00465770577394, "nombre": "Restaurante Vieja Esquina (Artigas y Costanera)", "tipo": "Gastronomia"},
+            "macuco_bar.txt":              {"lat": -35.58368442311776, "lng": -58.00808528564382, "nombre": "Macuco Bar (Av. Costanera España 19)", "tipo": "Gastronomia"},
+            "areca_multiespacio.txt":      {"lat": -35.576695198228165, "lng": -58.01342859043639, "nombre": "Areca Multiespacio (Libres del Sur 14)", "tipo": "Gastronomia"},
+            "el_bodegon.txt":              {"lat": -35.5766171667788, "lng": -58.00933847453229, "nombre": "El Bodegón (Av. Lastra 446)", "tipo": "Gastronomia"},
+            "cafe_mule.txt":               {"lat": -35.57966751634684, "lng": -58.01946645179981, "nombre": "Café Mulé (Av. Costanera España 4)", "tipo": "Gastronomia"},
+            "la_toscana.txt":              {"lat": -35.578664485504014, "lng": -58.011106705776285, "nombre": "La Toscana (Lavalle 139)", "tipo": "Gastronomia"},
             "qva_parrilla.txt":            {"lat": -35.57732048591032, "lng": -58.01334014582103, "nombre": "Qva (Libres del Sur 87)", "tipo": "Gastronomia"},
             
             # --- Documentos del Corpus General (Fijados con alta resolución) ---
