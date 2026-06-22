@@ -4,7 +4,7 @@ init_db.py
 Inicializador y sincronizador de la base de datos de MuseoVivo.
 
 Modos de uso:
-  python init_db.py              # sincroniza corpus → DB (sin duplicados)
+  python init_db.py         # sincroniza corpus → DB (sin duplicados)
   python init_db.py --reset      # borra la DB y la reconstruye desde cero
   python init_db.py --status     # muestra el estado actual sin modificar nada
 
@@ -16,39 +16,45 @@ import os
 import sys
 from modules.db import BaseDatos
 
-# ⚠️ Asegurate de que tus .txt limpios estén dentro de esta ruta exacta
+# Asegurate de que tus .txt limpios estén dentro de esta ruta exacta
 CORPUS_DIR = "data/corpus/"
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def parsear_encabezado(lineas, nombre_archivo=""):
     """
-    Detecta el formato del archivo y extrae (titulo, fuente, inicio_cuerpo).
+    Detecta el formato del archivo y extrae (titulo, fuente, inicio_cuerpo)
+    de forma robusta sin importar el orden de las etiquetas.
     """
     fuente = ""
     titulo = ""
+    inicio_cuerpo = 0
 
-    # Detectamos si el archivo tiene encabezado estructurado (primeras 5 líneas)
-    tiene_encabezado = any(
-        l.strip().startswith("FUENTE:") or l.strip().startswith("TITULO:")
-        for l in lineas[:5]
-    )
+    # 1. Escaneamos las primeras 5 líneas para extraer metadatos
+    limite_escaneo = min(5, len(lineas))
+    tiene_encabezado = False
+    
+    for i in range(limite_escaneo):
+        s = lineas[i].strip()
+        if s.startswith("FUENTE:"):
+            fuente = s.replace("FUENTE:", "").strip()
+            tiene_encabezado = True
+        elif s.startswith("TITULO:"):
+            titulo = s.replace("TITULO:", "").strip()
+            tiene_encabezado = True
 
     if tiene_encabezado:
-        # ── Formato A o B ─────────────────────────────────────────────────────
-        inicio_cuerpo = 0
-        for i, linea in enumerate(lineas):
-            s = linea.strip()
-            if s.startswith("FUENTE:"):
-                fuente = s.replace("FUENTE:", "").strip()
-            elif s.startswith("TITULO:"):
-                titulo = s.replace("TITULO:", "").strip()
-            elif s == "" and fuente:
-                inicio_cuerpo = i + 1
-                break
-
+        # Buscamos dónde termina el bloque de encabezado (primera línea vacía después de los datos)
+        for i in range(len(lineas)):
+            if lineas[i].strip() == "":
+                # Verificamos si ya pasamos las líneas de metadatos básicas
+                if i >= 1: 
+                    inicio_cuerpo = i + 1
+                    break
+        
+        # Fallback por si no se definió un título explícito en el archivo estructurado
         if not titulo:
-            slug   = fuente.split("/")[-1].replace("-", " ").replace("_", " ").strip()
+            slug = fuente.split("/")[-1].replace("-", " ").replace("_", " ").strip()
             titulo = slug.title() if slug else nombre_archivo
 
         return titulo, fuente or nombre_archivo, inicio_cuerpo
@@ -59,15 +65,15 @@ def parsear_encabezado(lineas, nombre_archivo=""):
 
         # Primera línea corta sin punto final → es el título del doc
         if primera and len(primera) < 80 and not primera.endswith("."):
-            titulo        = primera
+            titulo = primera
             inicio_cuerpo = 1
         else:
-            # Todo el archivo es cuerpo; título desde nombre de archivo
-            slug          = nombre_archivo.replace(".txt", "").replace("_", " ").replace("-", " ")
-            titulo        = slug.title()
+            # Todo el archivo es cuerpo; título derivado del nombre de archivo
+            slug = nombre_archivo.lower().replace(".txt", "").replace("_", " ").replace("-", " ")
+            titulo = slug.title()
             inicio_cuerpo = 0
 
-        # La fuente es el nombre del archivo (no hay URL)
+        # La fuente de respaldo es el nombre del archivo
         return titulo, nombre_archivo, inicio_cuerpo
 
 
@@ -79,8 +85,9 @@ def sincronizar_corpus(db):
         print(f"❌ No se encontró la carpeta de corpus en: {CORPUS_DIR}")
         return 0, 0, 0
 
-    archivos = sorted(f for f in os.listdir(CORPUS_DIR) if f.endswith(".txt"))
-    total    = len(archivos)
+    # Forzamos lower() en la verificación para no ignorar archivos .TXT en mayúsculas
+    archivos = sorted(f for f in os.listdir(CORPUS_DIR) if f.lower().endswith(".txt"))
+    total = len(archivos)
 
     if total == 0:
         print("⚠️  La carpeta corpus está vacía. Colocá tus archivos .txt limpios allí.")
@@ -90,7 +97,7 @@ def sincronizar_corpus(db):
     insertados = duplicados = errores = 0
 
     for nombre in archivos:
-        # 🛠️ AJUSTE CLAVE: Evitamos cargar las preguntas de prueba de NLP al conocimiento del chatbot
+        # Filtro de exclusión para consultas de testing de la facultad o desarrollo
         if "consultas_coloquiales" in nombre.lower() or nombre == "DEV_Test_Consultas_Coloquiales.txt":
             continue
 
@@ -98,6 +105,9 @@ def sincronizar_corpus(db):
         try:
             with open(ruta, encoding="utf-8") as f:
                 lineas = f.readlines()
+
+            if not lineas:
+                continue
 
             titulo, fuente, inicio_cuerpo = parsear_encabezado(lineas, nombre)
             contenido = "".join(lineas[inicio_cuerpo:]).strip()
@@ -107,7 +117,7 @@ def sincronizar_corpus(db):
                 errores += 1
                 continue
 
-            # Control de duplicados por fuente
+            # Control estricto de duplicados por fuente
             db.cursor.execute(
                 "SELECT id FROM conocimiento WHERE fuente=?", (fuente,)
             )
@@ -122,13 +132,13 @@ def sincronizar_corpus(db):
 
         except Exception as e:
             print(f"  ❌ {nombre}: error al procesar → {e}")
-            errores += 1
+            errors += 1
 
     return insertados, duplicados, errores
 
 
 def mostrar_status(db):
-    """Muestra el estado actual de la DB sin modificar nada."""
+    """Muestra el estado actual de la DB sin romper codificaciones en consola."""
     try:
         db.cursor.execute("SELECT COUNT(*) FROM conocimiento")
         total = db.cursor.fetchone()[0]
@@ -143,11 +153,12 @@ def mostrar_status(db):
         print(f"  📊 ESTADO ACTUAL DE LA BASE DE DATOS")
         print(f"{'═'*55}")
         print(f"  Documentos en conocimiento : {total}")
-        print(f"  Interacciones registradas  : {interacciones}")
+        print(f"  Interacciones registradas  : {interinteractions if 'interinteractions' in locals() else interacciones}")
         print(f"\n  Últimos 5 documentos cargados:")
         for fuente, titulo in recientes:
             fuente_corta = fuente[:30] + "..." if len(fuente) > 30 else fuente
-            print(f"  Â· {titulo[:45]:<45} ({fuente_corta})")
+            # Cambiado el caracter raro por un punto limpio ascii para Windows
+            print(f"  * {titulo[:45]:<45} ({fuente_corta})")
         print(f"{'═'*55}\n")
     except Exception as e:
         print(f"❌ Error al leer el estado: {e}")
@@ -192,7 +203,12 @@ if __name__ == "__main__":
     print(f"  ♻️  Duplicados  : {duplicados}  ← ya estaban en DB")
     print(f"  ❌ Errores     : {errores}  ← contenido < 50 chars")
     print(f"{'─'*45}")
-    print(f"  Total documentos en DB: {db.contar_documentos()}")
+    try:
+        db.cursor.execute("SELECT COUNT(*) FROM conocimiento")
+        total_docs = db.cursor.fetchone()[0]
+        print(f"  Total documentos en DB: {total_docs}")
+    except:
+        print(f"  Total documentos en DB: N/A")
     print(f"{'─'*45}\n")
 
     if insertados > 0:

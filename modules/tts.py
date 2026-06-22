@@ -1,5 +1,6 @@
 import os
 import re
+import hashlib
 from gtts import gTTS
 
 class TTSEngine:
@@ -23,39 +24,57 @@ class TTSEngine:
         texto = re.sub(r'http\S+', '', texto)
         # Elimina referencias entre corchetes tipo [1], [fuente]
         texto = re.sub(r'\[.*?\]', '', texto)
+        # Reemplaza asteriscos de formato Markdown (evita que gTTS intente leer "asterisco")
+        texto = texto.replace("**", "").replace("*", "")
         # Reemplaza saltos de línea por espacios para una lectura continua
         texto = texto.replace("\n", " ").strip()
         # Elimina espacios múltiples
         texto = re.sub(r'\s+', ' ', texto)
         return texto
 
+    def _recortar_texto_inteligente(self, texto, max_chars=500):
+        """Corta el texto respetando los límites de las palabras para no romper la dicción."""
+        if len(texto) <= max_chars:
+            return texto
+            
+        # Buscamos cortar en el último espacio disponible antes del límite
+        corte = texto[:max_chars].rfind(' ')
+        if corte == -1:
+            corte = max_chars
+            
+        return texto[:corte].strip() + "..."
+
     def sintetizar_para_web(self, texto):
         """
-        Convierte texto a audio y devuelve la ruta del archivo MP3.
-        Optimizado para respuestas rápidas limitando la longitud.
+        Convierte texto a audio devolviendo una ruta única basada en hash MD5.
+        Previene bloqueos de archivo en Windows y actúa como caché de audio.
         """
         if not texto:
             return None
             
         try:
-            # 1. Pre-procesamiento del texto
+            # 1. Pre-procesamiento y corte limpio de oraciones
             texto_limpio = self.limpiar_texto(texto)
+            texto_final = self._recortar_texto_inteligente(texto_limpio, max_chars=500)
             
-            # 2. Recorte de seguridad (Max 500 caracteres para el audio)
-            # Esto mejora la latencia y evita que el usuario espere demasiado la descarga
-            if len(texto_limpio) > 500:
-                texto_final = texto_limpio[:500] + "..."
-            else:
-                texto_final = texto_limpio
-                
-            # 3. Generación del audio
+            if not texto_final.replace("...", "").strip():
+                return None
+
+            # 2. Generar un nombre único basado en el contenido (Caché Dinámica)
+            # Evita el error de bloqueo de archivo de Windows (PermissionError)
+            text_hash = hashlib.md5(texto_final.encode('utf-8')).hexdigest()
+            filename = os.path.join(self.output_dir, f"tts_{text_hash}.mp3")
+            
+            # 3. Si el audio ya fue generado antes, lo reutilizamos al instante
+            if os.path.exists(filename):
+                print(f"🔊 TTS Cache: Reutilizando audio existente -> {filename}")
+                return filename
+            
+            # 4. Generación y guardado del nuevo audio
             tts = gTTS(text=texto_final, lang=self.idioma, tld=self.tld, slow=False)
-            filename = os.path.join(self.output_dir, "temp_res.mp3")
-            
-            # 4. Guardado (sobrescribe el anterior para ahorrar espacio)
             tts.save(filename)
             
-            print(f"🔊 TTS: Audio generado con éxito ({len(texto_final)} caracteres).")
+            print(f"🔊 TTS: Nuevo audio generado con éxito ({len(texto_final)} caracteres).")
             return filename 
             
         except Exception as e:

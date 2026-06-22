@@ -41,7 +41,7 @@ class BaseDatos:
             )
         ''')
         
-        # 3. Tabla de Métricas (Datos agregados)
+        # 3. Tabla de Métricas (Datos agregados de uso diario)
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS metricas (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,6 +51,23 @@ class BaseDatos:
                 pp_promedio REAL DEFAULT 0
             )
         ''')
+
+        # 4. Tabla de Evaluaciones de Laboratorio/Tests (Evita fallos en el Dashboard)
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS evaluaciones_tests (
+                id INTEGER PRIMARY KEY, 
+                precision REAL, 
+                recall REAL, 
+                f1 REAL, 
+                accuracy_ner REAL
+            )
+        ''')
+        
+        # Inicializamos la fila única de tests si no existe para que el Dashboard no lea vacío
+        self.cursor.execute("SELECT COUNT(*) FROM evaluaciones_tests WHERE id=1")
+        if self.cursor.fetchone()[0] == 0:
+            self.cursor.execute("INSERT INTO evaluaciones_tests (id, precision, recall, f1, accuracy_ner) VALUES (1, 0.0, 0.0, 0.0, 0.0)")
+        
         self.conn.commit()
 
     def contar_documentos(self):
@@ -63,23 +80,29 @@ class BaseDatos:
             return 0
 
     def guardar_interaccion(self, pregunta, score, pp, tiempo, wer_val=0.0):
-        """Registra todas las métricas, incluyendo el WER y devuelve el ID único generado."""
+        """Registra todas las métricas, forzando tipos numéricos flotantes, y devuelve el ID."""
         try:
             tiempo_ms = int(tiempo * 1000)
+            
+            # Forzamos casteo a float para asegurar el almacenamiento de decimales en SQLite
+            pp_flotante = float(pp) if pp is not None else 0.0
+            score_flotante = float(score) if score is not None else 0.0
+            wer_flotante = float(wer_val) if wer_val is not None else 0.0
+
             query = """
                 INSERT INTO historial (texto_transcripto, score_similitud, perplejidad, tiempo_ms, wer)
                 VALUES (?, ?, ?, ?, ?)
             """
-            self.cursor.execute(query, (pregunta, score, pp, tiempo_ms, wer_val))
+            self.cursor.execute(query, (pregunta, score_flotante, pp_flotante, tiempo_ms, wer_flotante))
             self.conn.commit()
-            print(f"✅ Interacción registrada (PP: {pp:.2f}, WER: {wer_val:.2f})")
-            return self.cursor.lastrowid  # Retorna el ID autoincremental de la fila insertada
+            print(f"✅ Interacción registrada (PP: {pp_flotante:.4f}, WER: {wer_flotante:.2f})")
+            return self.cursor.lastrowid
         except Exception as e:
             print(f"❌ Error al guardar en historial: {e}")
             return None
 
     def registrar_feedback(self, pregunta, valor):
-        """Método heredado (Búsqueda por texto plano)."""
+        """Método fallback (Búsqueda por texto plano)."""
         try:
             query = """
                 UPDATE historial 
@@ -93,7 +116,7 @@ class BaseDatos:
             print(f"❌ Error al registrar feedback por texto: {e}")
 
     def registrar_feedback_por_id(self, interaccion_id, valor):
-        """Actualiza la métrica de feedback de forma segura y directa usando el ID numérico."""
+        """Actualiza la métrica de feedback de forma segura usando el ID numérico único."""
         try:
             query = "UPDATE historial SET feedback = ? WHERE id = ?"
             self.cursor.execute(query, (valor, interaccion_id))
@@ -103,37 +126,25 @@ class BaseDatos:
             print(f"❌ Error al registrar feedback por ID: {e}")
 
     def insertar_documento(self, titulo, contenido, fuente):
-        self.cursor.execute(
-            "INSERT INTO conocimiento (titulo, contenido, fuente) VALUES (?, ?, ?)",
-            (titulo, contenido, fuente)
-        )
-        self.conn.commit()
-
-    def cerrar(self):
-        self.conn.close() 
+        try:
+            self.cursor.execute(
+                "INSERT INTO conocimiento (titulo, contenido, fuente) VALUES (?, ?, ?)",
+                (titulo, contenido, fuente)
+            )
+            self.conn.commit()
+        except Exception as e:
+            print(f"❌ Error al insertar documento técnico: {e}")
 
     def actualizar_metricas_test(self, precision=None, recall=None, f1=None, accuracy_ner=None):
         """Guarda automáticamente los resultados de los tests de consola en la BD."""
         try:
-            self.cursor.execute("""
-                CREATE TABLE IF NOT EXISTS evaluaciones_tests (
-                    id INTEGER PRIMARY KEY, 
-                    precision REAL, 
-                    recall REAL, 
-                    f1 REAL, 
-                    accuracy_ner REAL
-                )
-            """)
-            self.cursor.execute("SELECT * FROM evaluaciones_tests WHERE id=1")
+            self.cursor.execute("SELECT precision, recall, f1, accuracy_ner FROM evaluaciones_tests WHERE id=1")
             row = self.cursor.fetchone()
-            if not row:
-                self.cursor.execute("INSERT INTO evaluaciones_tests (id, precision, recall, f1, accuracy_ner) VALUES (1, 0.0, 0.0, 0.0, 0.0)")
-                row = (1, 0.0, 0.0, 0.0, 0.0)
-                
-            p = precision if precision is not None else row[1]
-            r = recall if recall is not None else row[2]
-            f = f1 if f1 is not None else row[3]
-            a = accuracy_ner if accuracy_ner is not None else row[4]
+            
+            p = precision if precision is not None else row[0]
+            r = recall if recall is not None else row[1]
+            f = f1 if f1 is not None else row[2]
+            a = accuracy_ner if accuracy_ner is not None else row[3]
             
             self.cursor.execute("UPDATE evaluaciones_tests SET precision=?, recall=?, f1=?, accuracy_ner=? WHERE id=1", (p, r, f, a))
             self.conn.commit()
@@ -141,12 +152,18 @@ class BaseDatos:
             print(f"❌ Error al actualizar métricas de test: {e}")
 
     def obtener_metricas_test(self):
-        """Devuelve los últimos resultados al Dashboard."""
+        """Devuelve los últimos resultados almacenados directamente al Dashboard."""
         try:
             self.cursor.execute("SELECT precision, recall, f1, accuracy_ner FROM evaluaciones_tests WHERE id=1")
             row = self.cursor.fetchone()
             if row:
                 return {"precision": row[0], "recall": row[1], "f1": row[2], "accuracy_ner": row[3]}
+        except Exception as e:
+            print(f"⚠️ Error al recuperar evaluaciones_tests: {e}")
+        return {"precision": 0.0, "recall": 0.0, "f1": 0.0, "accuracy_ner": 0.0}
+
+    def cerrar(self):
+        try:
+            self.conn.close()
         except:
-            pass
-        return {"precision": 0.0, "recall": 0.0, "f1": 0.0, "accuracy_ner": 0.0} 
+            pass 

@@ -91,6 +91,13 @@ class MotorBusqueda:
         idx_mejor = similitudes.argmax()
         score = round(float(similitudes[idx_mejor]), 4)
         
-        # ELIMINAMOS EL UMBRAL HARDCODEADO DE 0.12
-        # Devolvemos el score real para que la interfaz decida si entra en Nivel 1, 2 o 3.
+        # --- CONTROL DE SEGURIDAD MÍNIMO ---
+        # Si la similitud matemática es exactamente 0.0 (la query no comparte ninguna 
+        # palabra con el corpus), devolvemos el fallback genérico directamente.
+        if score == 0.0:
+            return {"contenido": "No encontré información específica en el archivo histórico de Chascomús."}, 0.0
+        
+        # --- LIBERACIÓN DE UMBRALES ---
+        # Se remueve la regla estricta de 0.12. Delegamos el score real de coma flotante 
+        # a app_unificada.py para que ejecute sus propias lógicas de visualización (Niveles 1, 2 y 3).
         return self.metadata[idx_mejor], score 

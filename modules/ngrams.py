@@ -1,97 +1,141 @@
-import collections
 import math
 import re
-from modules.db import BaseDatos 
+import collections
+import unicodedata
 
 class ModeloNgramas:
-    def __init__(self, n=2, k=0.5): # Subimos k a 0.5 para un suavizado más robusto
-        self.n = n  
-        self.k = k  
+    def __init__(self, n=2, k=0.5, db_instancia=None):
+        """
+        Inicializa el modelo de N-gramas (por defecto Bigramas con suavizado de Laplace).
+        :param n: Grado del n-grama (2 para bigramas, 3 para trigramas, etc.)
+        :param k: Parámetro de suavizado de Laplace (k-smoothing)
+        :param db_instancia: Instancia de la base de datos para auto-entrenamiento inmediato
+        """
+        self.n = n
+        self.k = k
         self.counts = collections.defaultdict(collections.Counter)
-        self.context_counts = collections.defaultdict(int)
+        self.context_counts = collections.Counter()
         self.vocabulario = set()
         
-        # Cargamos los datos de Chascomús automáticamente
-        db = BaseDatos()
-        self.entrenar_desde_db(db)
-        db.cerrar() # Importante cerrar la conexión aquí
+        # Si se pasa la base de datos, ejecutamos el auto-entrenamiento con el historial existente
+        if db_instancia:
+            self.entrenar_desde_db(db_instancia)
 
     def _limpiar_y_tokenizar(self, texto):
-        """Unifica la limpieza de texto tanto para entrenamiento como para consulta."""
+        """Sanitiza el texto eliminando puntuación, tildes y fragmentándolo en tokens."""
         if not texto:
             return []
-        # Pasamos a minúsculas y removemos puntuación, tildes y signos de expresión
-        texto_limpio = texto.lower()
-        texto_limpio = re.sub(r'[.,\/#!$%\^&\*;:{}=\-_`~()¿?¡!]', '', texto_limpio)
+        # Normalizar y remover tildes/acentos gráficos
+        texto_bajo = ''.join(
+            c for c in unicodedata.normalize('NFD', texto.lower()) 
+            if unicodedata.category(c) != 'Mn'
+        )
+        # Filtrar caracteres no alfanuméricos
+        texto_limpio = re.sub(r'[^\w\s]', '', texto_bajo)
         return texto_limpio.split()
 
-    def entrenar_desde_db(self, db_instancia):
-        """Carga el texto de la DB y entrena el modelo."""
-        try:
-            db_instancia.cursor.execute("SELECT contenido FROM conocimiento")
-            filas = db_instancia.cursor.fetchall()
-            
-            for (contenido,) in filas:
-                tokens = self._limpiar_y_tokenizar(contenido)
-                self.entrenar(tokens)
-            print(f"📈 N-Grams: Entrenado con {len(self.vocabulario)} palabras únicas.")
-        except Exception as e:
-            print(f"⚠️ Error al entrenar n-gramas: {e}")
+    def entrenar(self, corpus_textos):
+        """
+        Entrena el modelo basándose en una lista de strings.
+        :param corpus_textos: Lista de oraciones o párrafos históricos
+        """
+        self.counts.clear()
+        self.context_counts.clear()
+        self.vocabulario.clear()
 
-    def entrenar(self, corpus_tokens):
-        for i in range(len(corpus_tokens) - self.n + 1):
-            contexto = tuple(corpus_tokens[i:i+self.n-1])
-            siguiente = corpus_tokens[i+self.n-1]
-            self.counts[contexto][siguiente] += 1
-            self.context_counts[contexto] += 1
-            self.vocabulario.add(siguiente)
+        for texto in corpus_textos:
+            tokens = self._limpiar_y_tokenizar(texto)
+            if not tokens:
+                continue
+                
+            # Registrar palabras en el universo del vocabulario global
+            for token in tokens:
+                self.vocabulario.add(token)
+
+            # Insertar tokens de padding según el grado N seleccionado
+            tokens_con_padding = ["<inicio>"] * (self.n - 1) + tokens
+            
+            # Construcción de las ventanas deslizantes de n-gramas
+            for i in range(self.n - 1, len(tokens_con_padding)):
+                contexto = tuple(tokens_con_padding[i - self.n + 1:i])
+                palabra = tokens_con_padding[i]
+                
+                self.counts[contexto][palabra] += 1
+                self.context_counts[contexto] += 1
+
+    def entrenar_desde_db(self, db_instancia):
+        """Extrae de forma directa las transcripciones guardadas para ajustar el modelo al léxico real."""
+        try:
+            query = "SELECT texto_transcripto FROM historial WHERE texto_transcripto IS NOT NULL AND texto_transcripto != ''"
+            df = db_instancia.ejecutar_query_df(query)
+            if df is not None and not df.empty:
+                textos = df['texto_transcripto'].tolist()
+                self.entrenar(textos)
+        except Exception:
+            pass # Resguardo silencioso si la tabla aún se está inicializando
 
     def obtener_probabilidad(self, palabra, contexto):
+        """Calcula la probabilidad condicional P(palabra|contexto) aplicando suavizado de Laplace."""
         contexto = tuple(contexto)
-        count_secuencia = self.counts[contexto][palabra]
+        count_ngram = self.counts[contexto][palabra]
         count_contexto = self.context_counts[contexto]
         
-        tam_vocab = max(len(self.vocabulario), 1)
-        denominador = count_contexto + (self.k * tam_vocab)
-        return (count_secuencia + self.k) / denominador
+        # Tamaño efectivo del vocabulario para el denominador del suavizado
+        tamano_vocabulario = len(self.vocabulario)
+        if tamano_vocabulario == 0:
+            tamano_vocabulario = 1
+            
+        # Fórmula matemática estándar de Laplace: (C(w_i, w_{i-1}) + k) / (C(w_{i-1}) + k * |V|)
+        prob = (count_ngram + self.k) / (count_contexto + self.k * tamano_vocabulario)
+        return prob
 
     def calcular_perplejidad(self, texto):
-        """Mide la coherencia de la secuencia de palabras de forma matemática estable."""
+        """
+        Mide la coherencia gramatical y léxica de una secuencia de palabras.
+        A menor perplejidad, mayor coherencia sintáctica respecto al corpus entrenado.
+        """
         tokens = self._limpiar_y_tokenizar(texto) if isinstance(texto, str) else texto
         
         if not tokens: 
-            return 150.0  # Umbral base por defecto ante vacíos
+            return 150.0  # Umbral base por defecto ante entradas vacías
+            
+        if not self.vocabulario:
+            return 100.0  # Fallback seguro si el motor se evalúa sin datos previos
         
-        # Corrección matemática para consultas más cortas que el tamaño del n-grama (ej. unigramas)
-        if len(tokens) < self.n:
-            palabra = tokens[0]
-            if palabra in self.vocabulario:
-                # Si la palabra existe en el corpus de Chascomús, calculamos su probabilidad unigrama aproximada
-                total_conteos = sum(self.context_counts.values()) or 1
-                conteo_palabra = sum(self.counts[ctx][palabra] for ctx in self.counts)
-                prob = (conteo_palabra + self.k) / (total_conteos + (self.k * len(self.vocabulario)))
-                return round(math.pow(2, -math.log2(prob)), 2)
+        log_prob_total = 0.0
+        n_tokens = len(tokens)
+        tamano_vocabulario = len(self.vocabulario)
+        
+        # Padding idéntico al entrenamiento para alinear los contextos de bigramas
+        tokens_con_padding = ["<inicio>"] * (self.n - 1) + tokens
+        
+        # Procesamiento secuencial con ventana deslizante
+        for i in range(self.n - 1, len(tokens_con_padding)):
+            contexto = tuple(tokens_con_padding[i - self.n + 1:i])
+            palabra = tokens_con_padding[i]
+            
+            # --- DETECCIÓN Y PENALIZACIÓN OPTIMIZADA DE PALABRAS FUERA DE VOCABULARIO (OOV) ---
+            if palabra != "<inicio>" and palabra not in self.vocabulario:
+                # Se asigna una probabilidad base dinámica acorde al universo léxico actual
+                prob = 1.0 / (tamano_vocabulario + 1)
             else:
-                return 180.0 # Penalización controlada pero sana para una palabra OOV sola
-
-        log_prob_total = 0
-        N = len(tokens) - self.n + 1
-        
-        for i in range(N):
-            contexto = tokens[i:i+self.n-1]
-            palabra = tokens[i+self.n-1]
-            prob = self.obtener_probabilidad(palabra, contexto)
+                prob = self.obtener_probabilidad(palabra, contexto)
+            
+            # Protección estricta frente a subflujos o indeterminaciones numéricas
+            if prob <= 0:
+                prob = 1e-5
+                
             log_prob_total += math.log2(prob)
         
-        avg_log_prob = log_prob_total / N
-        pp = math.pow(2, -avg_log_prob)
+        # Entropía cruzada promedio: H = -1/N * sum(log2(P))
+        entropia_promedio = - (log_prob_total / n_tokens)
         
-        # Evitamos saltos numéricos infinitos o aberrantes en el Dashboard por ruido de audio o palabras OOV
+        # Perplejidad = 2^H
+        pp = math.pow(2, entropia_promedio)
+        
+        # Validación de estabilidad para renderizar en Streamlit de forma segura
         if math.isnan(pp) or math.isinf(pp):
             return 200.0
             
-        return round(min(pp, 350.0), 2) # Seteamos un techo técnico de dispersión
-
-    def validar_coherencia(self, texto, umbral=150.0):
-        pp = self.calcular_perplejidad(texto)
-        return {"es_coherente": pp < umbral, "perplejidad": pp} 
+        # Rango máximo extendido a 1000.0 para evaluar correctamente la severidad de las desviaciones
+        return round(max(min(pp, 1000.0), 1.0), 2)
